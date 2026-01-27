@@ -1,3 +1,5 @@
+# app/routes/auth.py
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -7,11 +9,17 @@ import uuid
 from app.database import get_db
 from app.models.admin import Admin
 from app.schemas.admin import TokenResponse, ChangePasswordRequest
-from app.utils.auth import verify_password, hash_password, create_access_token, get_current_admin
+from app.utils.auth import (
+    verify_password,
+    hash_password,
+    create_access_token
+)
+from app.utils.jwt_dependency import get_current_admin
 from app.utils.email import send_otp_email
 from app.utils.otp import generate_otp, otp_expiry
 
 router = APIRouter(prefix="/admin", tags=["Admin Auth"])
+
 
 # -------------------- LOGIN --------------------
 @router.post("/login", response_model=TokenResponse)
@@ -26,26 +34,35 @@ def admin_login(
     if not verify_password(form_data.password, admin.password_hash):
         raise HTTPException(status_code=401, detail="Invalid password")
 
-    token = create_access_token(data={"sub": admin.email, "role": "admin"})
+    token = create_access_token({
+        "sub": admin.email,
+        "role": "admin"
+    })
+
     return {"access_token": token, "token_type": "bearer"}
+
 
 # -------------------- CHANGE PASSWORD --------------------
 @router.post("/change-password")
 def change_password(
     data: ChangePasswordRequest,
     db: Session = Depends(get_db),
-    current_admin=Depends(get_current_admin)
+    current_admin: Admin = Depends(get_current_admin)
 ):
-    admin = db.query(Admin).filter(Admin.email == current_admin["sub"]).first()
-    if not admin:
-        raise HTTPException(status_code=404, detail="Admin not found")
+    if not verify_password(
+        data.current_password,
+        current_admin.password_hash
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Current password is incorrect"
+        )
 
-    if not verify_password(data.current_password, admin.password_hash):
-        raise HTTPException(status_code=400, detail="Current password is incorrect")
-
-    admin.password_hash = hash_password(data.new_password)
+    current_admin.password_hash = hash_password(data.new_password)
     db.commit()
+
     return {"message": "Password changed successfully"}
+
 
 # -------------------- FORGOT PASSWORD --------------------
 @router.post("/forgot-password")
@@ -61,6 +78,7 @@ def forgot_password(email: str, db: Session = Depends(get_db)):
 
     send_otp_email(email, otp)
     return {"message": "OTP sent successfully"}
+
 
 # -------------------- VERIFY OTP --------------------
 @router.post("/verify-otp")
@@ -78,6 +96,7 @@ def verify_otp(email: str, otp: str, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "OTP verified", "reset_token": reset_token}
+
 
 # -------------------- RESET PASSWORD --------------------
 @router.post("/reset-password")

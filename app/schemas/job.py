@@ -1,83 +1,44 @@
+from datetime import datetime, date
+from typing import Optional, List
 from pydantic import BaseModel
-from typing import Optional,List
-from datetime import datetime,date
 
-class JobCreate(BaseModel):
-    title: str
+
+class JobBase(BaseModel):
+    jobTitle: str
     department: str
-    work_mode: Optional[str]
-    roles_responsibilities: Optional[str]
-    required_skills: Optional[str]
-    experience_min: Optional[int]
-    experience_max: Optional[int]
-    qualification_required: Optional[str]
-    salary_min: Optional[int]
-    salary_max: Optional[int]
-    perks_benefits: Optional[str]
-    job_summary: Optional[str]
-    job_location: Optional[str]
-    job_locality: Optional[str]
-    openings: Optional[int]
-    application_deadline: Optional[date]
+    workMode: str
+    rolesResponsibilities: str
+    requiredSkills: str
+    experienceMin: float
+    experienceMax: float
+    qualification: str
+    salaryMin: float
+    salaryMax: float
+    perksBenefits: Optional[str] = None
+    jobLocation: str
+    jobLocality: Optional[str] = None
+    numOpenings: int
+    applicationDeadline: date
 
 
-class JobUpdate(BaseModel):
-    title: Optional[str]
-    department: Optional[str]
-    work_mode: Optional[str]
-
-    roles_responsibilities: Optional[str]
-    required_skills: Optional[str]
-
-    experience_min: Optional[int]
-    experience_max: Optional[int]
-
-    qualification_required: Optional[str]
-
-    salary_min: Optional[int]
-    salary_max: Optional[int]
-
-    perks_benefits: Optional[str]
-    job_summary: Optional[str]
-
-    job_location: Optional[str]
-    job_locality: Optional[str]
-
-    openings: Optional[int]
-    application_deadline: Optional[date]
-    is_active: Optional[bool]
+class JobCreate(JobBase):
+    pass
 
 
-class JobResponse(JobCreate):
+class JobUpdate(JobBase):
+    pass
+
+
+class JobResponse(JobBase):
     id: int
-    is_active: bool
-    created_at: datetime
+    createdAt: datetime
 
     class Config:
         from_attributes = True
 
-'''
-class JobOut(BaseModel):
-    id: int
-    title: str
-    department: str
-    location: str
-    employment_type: str
-    experience: str
-    description: str
-    jd_file: Optional[str]
-    is_active: bool
-    created_at: datetime
-
-    class Config:
-        from_attributes = True'''
 
 class PaginatedJobResponse(BaseModel):
     total: int
     page: int
     limit: int
     data: List[JobResponse]
-
-    
-
-    

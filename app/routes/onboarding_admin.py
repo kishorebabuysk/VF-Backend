@@ -9,7 +9,7 @@ from app.models.onboarding import Onboarding
 from app.models.onboarding_documents import OnboardingDocument
 from app.models.onboarding_nominee import OnboardingNominee, OnboardingFamily, OnboardingBank, OnboardingReference
 from app.models.onboarding_checklist import OnboardingChecklist
-from app.utils.auth import get_current_admin
+from app.utils.jwt_dependency import get_current_admin
 
 UPLOAD_DIR = "uploads/onboarding"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -35,6 +35,18 @@ def create_onboarding(
     db: Session = Depends(get_db)
 ):
     try:
+        # 🔐 CHECK: One onboarding per user (email-based)
+        existing = (
+            db.query(Onboarding)
+            .filter(Onboarding.email == data.email)
+            .first()
+        )
+        if existing:
+            raise HTTPException(
+                status_code=409,
+                detail="Onboarding already submitted for this user"
+            )
+
         onboarding = Onboarding(
             name=data.name,
             dob=data.dob,
@@ -107,7 +119,7 @@ def create_onboarding(
                     )
                 )
 
-        # ================= BANK (ONE-TO-ONE) =================
+        # ================= BANK =================
         if data.bank:
             onboarding.bank = OnboardingBank(
                 account_name=data.bank.account_name,
@@ -132,7 +144,7 @@ def create_onboarding(
                     )
                 )
 
-        # ================= CHECKLIST (ONE-TO-ONE) =================
+        # ================= CHECKLIST =================
         if data.checklist:
             onboarding.checklist = OnboardingChecklist(
                 experience_type=data.checklist.experience_type,
@@ -154,13 +166,19 @@ def create_onboarding(
         db.refresh(onboarding)
         return onboarding
 
+    except HTTPException:
+        raise
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 
+
 @router.get("/", response_model=List[OnboardingResponse])
-def list_onboardings(db: Session = Depends(get_db)):
+def list_onboardings(
+    db: Session = Depends(get_db),
+    current_admin=Depends(get_current_admin)
+):
     onboardings = (
         db.query(Onboarding)
         .options(
@@ -175,8 +193,13 @@ def list_onboardings(db: Session = Depends(get_db)):
     )
     return onboardings
 
+
 @router.get("/{onboarding_id}", response_model=OnboardingResponse)
-def get_onboarding_by_id(onboarding_id: int, db: Session = Depends(get_db)):
+def get_onboarding_by_id(
+    onboarding_id: int,
+    db: Session = Depends(get_db),
+    current_admin=Depends(get_current_admin)
+):
     onboarding = (
         db.query(Onboarding)
         .options(
@@ -196,26 +219,40 @@ def get_onboarding_by_id(onboarding_id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/{onboarding_id}")
-def delete_onboarding(onboarding_id: int, db: Session = Depends(get_db)):
+def delete_onboarding(
+    onboarding_id: int,
+    db: Session = Depends(get_db),
+    current_admin=Depends(get_current_admin)
+):
     onboarding = db.query(Onboarding).filter(Onboarding.id == onboarding_id).first()
     if not onboarding:
         raise HTTPException(status_code=404, detail="Onboarding not found")
 
     db.delete(onboarding)
     db.commit()
-    return {"message": "Onboarding deleted permanently", "onboarding_id": onboarding_id}
+    return {
+        "message": "Onboarding deleted permanently",
+        "onboarding_id": onboarding_id
+    }
+
 
 @router.delete("/bulk-delete/")
 def bulk_delete_onboardings(
-    onboarding_ids: List[int] = Query(..., description="List of Onboarding IDs to delete"),
-    db: Session = Depends(get_db)
+    onboarding_ids: List[int] = Query(...),
+    db: Session = Depends(get_db),
+    current_admin=Depends(get_current_admin)
 ):
     onboardings = db.query(Onboarding).filter(Onboarding.id.in_(onboarding_ids)).all()
     if not onboardings:
-        raise HTTPException(status_code=404, detail="No onboardings found for the provided IDs")
+        raise HTTPException(
+            status_code=404,
+            detail="No onboardings found for the provided IDs"
+        )
 
     for onboarding in onboardings:
         db.delete(onboarding)
-    db.commit()
-    return {"message": f"Deleted {len(onboardings)} onboardings successfully"}
 
+    db.commit()
+    return {
+        "message": f"Deleted {len(onboardings)} onboardings successfully"
+    }

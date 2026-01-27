@@ -8,10 +8,11 @@ class CSRCreate(BaseModel):
     image: Optional[str] = None
 
 class CSRUpdate(BaseModel):
-    title: Optional[str]
-    description: Optional[str]
-    image: Optional[str]
-    is_active: Optional[bool]
+    title: Optional[str] = None
+    description: Optional[str] = None
+    image: Optional[str] = None
+    is_active: Optional[bool] = None
+
 
 class CSRResponse(BaseModel):
     id: int

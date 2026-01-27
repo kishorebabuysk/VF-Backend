@@ -7,7 +7,8 @@ from app.database import get_db
 from app.config import settings
 from app.models.admin import Admin
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/admin/login")
+
 
 def get_current_admin(
     token: str = Depends(oauth2_scheme),
@@ -20,16 +21,28 @@ def get_current_admin(
     )
 
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        email: str | None = payload.get("sub")
-        if email is None:
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM]
+        )
+
+        email = payload.get("sub")
+        role = payload.get("role")
+
+        if email is None or role != "admin":
             raise credentials_exception
+
     except JWTError:
         raise credentials_exception
 
-    admin = db.query(Admin).filter(Admin.email == email).first()
+    admin = (
+        db.query(Admin)
+        .filter(Admin.email == email, Admin.is_active == True)
+        .first()
+    )
 
-    if not admin or not admin.is_active:
+    if not admin:
         raise credentials_exception
 
     return admin
