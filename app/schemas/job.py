@@ -4,21 +4,22 @@ from pydantic import BaseModel
 
 
 class JobBase(BaseModel):
-    jobTitle: str
+    title: str
     department: str
-    workMode: str
-    rolesResponsibilities: str
-    requiredSkills: str
-    experienceMin: float
-    experienceMax: float
-    qualification: str
-    salaryMin: float
-    salaryMax: float
-    perksBenefits: Optional[str] = None
-    jobLocation: str
-    jobLocality: Optional[str] = None
-    numOpenings: int
-    applicationDeadline: date
+    work_mode: str
+    roles_responsibilities: str
+    required_skills: str
+    experience_min: int
+    experience_max: int
+    qualification_required: str
+    salary_min: int
+    salary_max: int
+    perks_benefits: Optional[str]
+    job_location: str
+    job_locality: Optional[str]
+    openings: int
+    application_deadline: date
+
 
 
 class JobCreate(JobBase):
@@ -31,7 +32,7 @@ class JobUpdate(JobBase):
 
 class JobResponse(JobBase):
     id: int
-    createdAt: datetime
+    created_at: datetime
 
     class Config:
         from_attributes = True

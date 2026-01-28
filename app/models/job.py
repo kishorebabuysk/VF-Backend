@@ -5,19 +5,27 @@ class Job(Base):
     __tablename__ = "jobs"
 
     id = Column(Integer, primary_key=True, index=True)
-    jobTitle = Column(String(255), nullable=False)
-    department = Column(String(50), nullable=False)
-    workMode = Column(String(50), nullable=False)
-    rolesResponsibilities = Column(Text, nullable=False)
-    requiredSkills = Column(Text, nullable=False)
-    experienceMin = Column(Float, nullable=False)
-    experienceMax = Column(Float, nullable=False)
-    qualification = Column(String(255), nullable=False)
-    salaryMin = Column(Float, nullable=False)
-    salaryMax = Column(Float, nullable=False)
-    perksBenefits = Column(Text, nullable=True)
-    jobLocation = Column(String(255), nullable=False)
-    jobLocality = Column(String(255), nullable=True)
-    numOpenings = Column(Integer, nullable=False)
-    applicationDeadline = Column(Date, nullable=False)
-    createdAt = Column(DateTime, server_default=func.now(), nullable=False)
+
+    title = Column(String(255), nullable=False)
+    department = Column(String(100), nullable=False)
+    work_mode = Column(String(50))
+    roles_responsibilities = Column(Text)
+    required_skills = Column(Text)
+
+    experience_min = Column(Integer)
+    experience_max = Column(Integer)
+
+    qualification_required = Column(String(255))
+
+    salary_min = Column(Integer)
+    salary_max = Column(Integer)
+
+    perks_benefits = Column(Text)
+
+    job_location = Column(String(100))
+    job_locality = Column(String(100))
+
+    openings = Column(Integer)
+
+    application_deadline = Column(Date)
+    created_at = Column(DateTime, default=func.now())
