@@ -78,6 +78,8 @@ async def apply_job(
                 status_code=422,
                 detail="Experienced candidates must provide previous_company, previous_role, date_of_joining, and relieving_date",
             )
+        
+    full_name = f"{first_name.strip()} {last_name.strip()}"
 
     # --------------------------------------------------
     # SCHEMA VALIDATION
@@ -85,6 +87,7 @@ async def apply_job(
     application_create = ApplicationCreate(
         first_name=first_name,
         last_name=last_name,
+        full_name=full_name,
         phone=phone,
         email=email,
         date_of_birth=date_of_birth,
@@ -121,14 +124,47 @@ async def apply_job(
     # DATABASE SAVE
     # --------------------------------------------------
     db_application = Application(
-        **application_create.dict(),
-        pan_card_file=pan_card_path,
-        resume_file=resume_path,
-        photo_file=photo_path,
-        status="Pending",
-        captcha_verified=True,
-    )
+    job_id=job_id,
 
+    first_name=first_name,
+    last_name=last_name,
+    full_name=full_name,
+
+    phone=phone,
+    email=email,
+    date_of_birth=date_of_birth,
+    gender=gender,
+    location=location,
+
+    pan_number=pan_number,
+    pan_card_file=pan_card_path,
+    resume_file=resume_path,
+    photo_file=photo_path,
+
+    linkedin_url=linkedin_url,
+
+    highest_qualification=highest_qualification,
+    specialization=specialization,
+    university=university,
+    college=college,
+    year_of_passing=year_of_passing,
+
+    position_applied=position_applied,
+    preferred_work_mode=preferred_work_mode,
+    key_skills=key_skills,
+    expected_salary=expected_salary,
+    why_hire_me=why_hire_me,
+
+    experience_level=experience_level,
+    previous_company=previous_company,
+    previous_role=previous_role,
+    date_of_joining=date_of_joining,
+    relieving_date=relieving_date,
+
+    captcha_verified=True,
+    status="Pending",
+)
+    
     db.add(db_application)
     db.commit()
     db.refresh(db_application)

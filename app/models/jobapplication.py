@@ -10,6 +10,7 @@ class Application(Base):
 
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
+    full_name = Column(String(100), nullable=False)
     phone = Column(String(20))
     email = Column(String(100))
     date_of_birth = Column(Date)

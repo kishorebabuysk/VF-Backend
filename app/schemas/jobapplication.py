@@ -11,6 +11,7 @@ class ApplicationBase(BaseModel):
 
     first_name: str
     last_name: str
+    full_name: str
     phone: str
     email: str
     date_of_birth: date
@@ -78,7 +79,7 @@ class ApplicationCreate(ApplicationBase):
 class ApplicationResponse(ApplicationBase):
     id: int
 
-    # 🔥 MUST MATCH SQLAlchemy MODEL / DB
+    # MUST MATCH SQLAlchemy MODEL / DB
     pan_card_file: Optional[str]
     resume_file: Optional[str]
     photo_file: Optional[str]
